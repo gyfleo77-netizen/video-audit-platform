@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频智能审核分析平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: url('https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDNpMzduOXViODJteTEyNG53M2drMDlpNWhmcG9uZzBxNm9peWthOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUA7b3mdJsdGrzF6dW/giphy.gif') center/cover no-repeat fixed;
+            color: var(--dark);
+            position: relative;
+        }
+        
+        /* 添加半透明遮罩层 */
+        html::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(99, 102, 241, 0.15);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.6s ease;
+            flex-shrink: 0;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            animation: fadeIn 0.8s ease;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar, .main-content {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            max-height: 100%; 
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .sidebar h3 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--dark);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.95rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Slider */
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .slider-value {
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--primary) 0%, var(--secondary) 100%);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 12px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--light);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(248, 250, 252, 0.5);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-box:hover {
+            border-color: var(--primary);
+            background: rgba(239, 246, 255, 0.65);
+        }
+
+        .upload-box.dragover {
+            border-color: var(--primary);
+            background: rgba(239, 246, 255, 0.65);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .url-input-group input {
+            flex: 1;
+        }
+
+        /* Video Preview */
+        .video-preview {
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: black;
+        }
+
+        .video-preview video {
+            width: 100%;
+            display: block;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+
+        /* Report Section */
+        .report-section {
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .report-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Scene Cards */
+        .scene-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .scene-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .scene-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .scene-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .scene-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .scene-text {
+            background: rgba(248, 250, 252, 0.7);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            min-height: 100px;
+        }
+
+        /* Progress */
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Collapsible */
+        .collapsible {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 16px 20px;
+            background: rgba(248, 250, 252, 0.6);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            background: #e2e8f0;
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .collapsible-content.active {
+            display: block;
+        }
+        .report-text ul, .report-text ol,
+        .scene-text ul, .scene-text ol,
+        #tab-help ul, #tab-help ol {
+            /* 为列表恢复左内边距，这是最关键的一步 */
+            padding-left: 40px; 
+            margin-bottom: 16px; 
+        }
+
+        .report-text li,
+        .scene-text li,
+        #tab-help li {
+            /* 增加列表项之间的垂直间距，提升可读性 */
+            margin-bottom: 8px; 
+        }
+
+        .report-text blockquote,
+        .scene-text blockquote,
+        #tab-help blockquote {
+            /* 为 Markdown 引用 > 恢复样式 */
+            margin-left: 0;
+            padding-left: 15px;
+            border-left: 3px solid var(--border);
+            color: #64748b;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            html, body {
+                overflow: auto; /* 或者 overflow-y: auto; */
+            }
+            .main-layout {
+                grid-template-columns: 1fr;
+                overflow: visible;
+                height: auto;
+            }
+
+            .sidebar, .main-content {
+                max-height: none;
+                overflow-y: visible;
+            }
+
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .scene-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎬 视频智能审核分析平台</h1>
+            <p>基于场景智能切分的视频内容理解与审核系统</p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>⚙️ 模型配置</h3>
+                    <div class="form-group">
+                        <label class="form-label">模型路径</label>
+                        <input type="text" class="form-input" id="modelPath" value="./models/MiniCPM-V-4_5">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="useQuant">
+                        <label for="useQuant">使用 4bit 量化</label>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section">
+                    <h3>🎯 场景检测</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="useSceneDetection" checked>
+                        <label for="useSceneDetection">启用智能场景切分</label>
+                    </div>
+                    <div id="sceneDetectionOptions">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="useAdaptive">
+                            <label for="useAdaptive">使用自适应检测器</label>
+                        </div>
+                        <div class="slider-group" id="thresholdSlider">
+                            <div class="slider-label">
+                                <span>检测阈值</span>
+                                <span class="slider-value" id="thresholdValue">27.0</span>
+                            </div>
+                            <input type="range" min="15" max="40" step="1" value="27" id="sceneThreshold">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section">
+                    <h3>🎞️ 抽帧参数</h3>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>抽帧 FPS</span>
+                            <span class="slider-value" id="fpsValue">1.5</span>
+                        </div>
+                        <input type="range" min="0.5" max="5" step="0.1" value="1.5" id="chooseFps">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>最长边 (px)</span>
+                            <span class="slider-value" id="maxSideValue">512</span>
+                        </div>
+                        <input type="range" min="320" max="1024" step="32" value="512" id="maxSide">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>Time Scale (s)</span>
+                            <span class="slider-value" id="timeScaleValue">0.10</span>
+                        </div>
+                        <input type="range" min="0.05" max="0.5" step="0.05" value="0.1" id="timeScale">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section">
+                    <h3>💬 分析提示词</h3>
+                    <div class="form-group">
+                        <textarea class="form-textarea" id="promptText" rows="6">请分析这个场景并输出：
+1) 场景与人物（如有未成年人请标明）
+2) 关键动作与事件（按时间顺序描述）
+3) 潜在风险点（如血腥、暴力、色情、涉政等，需注明时间点）
+请确保结构清晰，总字数不超过 150 字。</textarea>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section">
+                    <h3>🎤 语音识别</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableAsr" checked>
+                        <label for="enableAsr">启用 Whisper ASR</label>
+                    </div>
+                    <div id="asrOptions">
+                        <div class="form-group">
+                            <label class="form-label">模型目录</label>
+                            <input type="text" class="form-input" id="asrModel" value="./models/faster-whisper-base">
+                        </div>
+                        <div class="two-cols">
+                            <div class="form-group">
+                                <label class="form-label">计算类型</label>
+                                <select class="form-select" id="asrComputeType">
+                                    <option value="int8_float16" selected>int8_float16</option>
+                                    <option value="float16">float16</option>
+                                    <option value="int8">int8</option>
+                                    <option value="int8_float32">int8_float32</option>
+                                    <option value="float32">float32</option>
+                                </select>
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <span>Beam Size</span>
+                                    <span class="slider-value" id="beamSizeValue">5</span>
+                                </div>
+                                <input type="range" min="1" max="10" step="1" value="5" id="asrBeamSize">
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="asrVad" checked>
+                            <label for="asrVad">VAD 过滤</label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">语言代码</label>
+                            <input type="text" class="form-input" id="asrLanguage" placeholder="留空自动检测">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>每场景最大字符</span>
+                                <span class="slider-value" id="asrMaxCharsValue">1200</span>
+                            </div>
+                            <input type="range" min="300" max="4000" step="100" value="1200" id="asrMaxChars">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="sidebar-section">
+                    <h3>📁 文件管理</h3>
+                    <div class="file-list" id="fileList">
+                        <p style="color: #64748b; font-size: 0.9rem;">暂无已下载的视频文件</p>
+                    </div>
+                    <button class="btn btn-secondary btn-block btn-sm" id="clearFiles">🗑️ 清空所有文件</button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="input">📤 视频输入</button>
+                    <button class="tab" data-tab="results">📊 分析结果</button>
+                    <button class="tab" data-tab="help">ℹ️ 使用说明</button>
+                </div>
+
+                <!-- Tab: Video Input -->
+                <div class="tab-content active" id="tab-input">
+                    <div class="upload-section">
+                        <div>
+                            <h3 style="margin-bottom: 16px;">📁 本地视频上传</h3>
+                            <div class="upload-box" id="uploadBox">
+                                <div class="upload-icon">📹</div>
+                                <div class="upload-text">拖拽文件到此处或点击上传</div>
+                                <div class="upload-hint">支持 MP4, MOV, MKV, AVI 格式</div>
+                                <input type="file" id="fileInput" accept="video/*" style="display: none;">
+                            </div>
+                            <div id="videoPreview" class="video-preview" style="display: none;">
+                                <video id="videoPlayer" controls></video>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 style="margin-bottom: 16px;">🌐 在线视频下载</h3>
+                            <div class="upload-box" style="cursor: default;">
+                                <div class="upload-icon">🔗</div>
+                                <div class="upload-text">输入视频链接</div>
+                                <div class="upload-hint">支持 YouTube, Bilibili 等主流平台</div>
+                                <div class="url-input-group">
+                                    <input type="text" class="form-input" id="videoUrl" placeholder="https://example.com/video.mp4">
+                                    <button class="btn btn-primary" id="downloadBtn">⬇️ 下载</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" id="analyzeBtn" style="font-size: 1.1rem; padding: 16px;">
+                        🚀 开始智能分析
+                    </button>
+                </div>
+
+                <!-- Tab: Results -->
+                <div class="tab-content" id="tab-results">
+                    <div class="alert alert-info" id="noResultsAlert">
+                        <span>ℹ️</span>
+                        <span>请先在「视频输入」标签页上传视频并点击「开始智能分析」</span>
+                    </div>
+
+                    <div id="resultsContent" style="display: none;">
+                        <!-- Stats -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="statScenes">5</div>
+                                <div class="stat-label">检测场景</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statFrames">30</div>
+                                <div class="stat-label">采样帧数</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statDuration">60.5s</div>
+                                <div class="stat-label">视频时长</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statFps">29.97</div>
+                                <div class="stat-label">视频帧率</div>
+                            </div>
+                        </div>
+
+                        <!-- Report -->
+                        <div class="report-section">
+                            <h3 style="margin-bottom: 16px;">📄 完整分析报告</h3>
+                            <div class="report-text" id="reportText">【MiniCPM-V 4.5 · 视频场景智能切分审核报告】
+
+📊 基础信息
+- 视频帧率: 29.97 fps
+- 视频时长: 60.52 秒
+- 检测场景: 5 个
+- 采样帧数: 30 帧
+- 读取方法: decord
+
+⚠️ 风险评估
+未发现明显违规内容
+
+📋 场景概览
+1. 场景1 (0.00s - 12.10s): 室内场景，主要人物活动
+2. 场景2 (12.10s - 24.50s): 场景切换，户外环境
+3. 场景3 (24.50s - 38.20s): 对话场景
+4. 场景4 (38.20s - 50.00s): 动作场景
+5. 场景5 (50.00s - 60.52s): 结尾场景
+
+✅ 审核结论：通过</div>
+                            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                                <button class="btn btn-primary" id="downloadJson">💾 下载 JSON 报告</button>
+                                <button class="btn btn-secondary" id="downloadTxt">📝 下载 TXT 报告</button>
+                            </div>
+                        </div>
+
+                        <!-- ASR Transcript -->
+                        <div class="collapsible">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span>🎤 完整语音转写</span>
+                                <span>▼</span>
+                            </div>
+                            <div class="collapsible-content">
+                                <div class="report-text" id="transcriptText">这是模拟的全文语音转写结果。在实际应用中，这里会显示 Whisper 模型对整个视频的完整转写内容，包括时间戳和说话人信息...</div>
+                            </div>
+                        </div>
+
+                        <!-- Scene Details -->
+                        <div class="collapsible">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span>🎬 场景详细分析</span>
+                                <span>▼</span>
+                            </div>
+                            <div class="collapsible-content active">
+                                <div id="sceneDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Help -->
+                <div class="tab-content" id="tab-help">
+                    <div style="line-height: 1.8;">
+                        <h2 style="color: var(--primary); margin-bottom: 20px;">📖 系统功能</h2>
+                        <p>本系统基于 <strong>MiniCPM-V 4.5</strong> 视觉语言模型，提供智能化的视频内容理解与审核能力。</p>
+
+                        <h3 style="color: var(--primary); margin-top: 30px; margin-bottom: 16px;">✨ 核心特性</h3>
+                        
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">1. 智能场景切分</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>🎯 自动识别视频中的场景切换点</li>
+                            <li>🔧 支持两种检测算法：
+                                <ul style="margin-left: 20px; margin-top: 8px;">
+                                    <li><strong>ContentDetector</strong>: 适用于快速切换场景（剪辑视频、新闻等）</li>
+                                    <li><strong>AdaptiveDetector</strong>: 适用于渐变场景（电影、纪录片等）</li>
+                                </ul>
+                            </li>
+                            <li>⚖️ 可调节检测灵敏度，平衡检测精度与场景数量</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">2. 多格式视频支持</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>🎥 自动检测编码格式（H264/AV1/VP9/HEVC）</li>
+                            <li>🔄 不兼容格式自动转换</li>
+                            <li>📦 多重读取机制确保最大兼容性</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">3. 语音识别（ASR）</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>🗣️ 基于 Faster-Whisper 的高效语音转写</li>
+                            <li>🌍 支持多语言自动检测</li>
+                            <li>🎯 VAD 过滤提升转写质量</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">4. 在线视频下载</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>🌐 支持 YouTube、Bilibili 等主流平台</li>
+                            <li>⚡ 基于 yt-dlp 的强大下载能力</li>
+                        </ul>
+
+                        <div class="divider"></div>
+
+                        <h3 style="color: var(--primary); margin-top: 30px; margin-bottom: 16px;">🔧 使用流程</h3>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">步骤 1: 准备视频</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>方式A：点击「本地视频上传」区域上传文件</li>
+                            <li>方式B：在「在线视频下载」输入 URL 并点击下载</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">步骤 2: 配置参数</h4>
+                        <p style="margin-left: 20px; margin-bottom: 16px;">在左侧边栏调整各项参数：</p>
+                        <ul style="margin-left: 40px; margin-bottom: 16px;">
+                            <li>⚙️ <strong>模型配置</strong>: 模型路径、量化选项</li>
+                            <li>🎯 <strong>场景检测</strong>: 是否启用、检测算法、灵敏度</li>
+                            <li>🎞️ <strong>抽帧参数</strong>: FPS、图像尺寸、时间缩放</li>
+                            <li>💬 <strong>提示词</strong>: 自定义分析要求</li>
+                            <li>🎤 <strong>语音识别</strong>: 是否启用、模型配置</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">步骤 3: 开始分析</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>点击「🚀 开始智能分析」按钮</li>
+                            <li>系统将自动完成：场景检测 → 抽帧 → 语音转写 → 内容分析</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 12px;">步骤 4: 查看结果</h4>
+                        <ul style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>切换到「📊 分析结果」标签页</li>
+                            <li>查看统计数据、完整报告、场景详情</li>
+                            <li>下载 JSON/TXT 格式报告</li>
+                        </ul>
+
+                        <div class="divider"></div>
+
+                        <h3 style="color: var(--primary); margin-top: 30px; margin-bottom: 16px;">⚙️ 参数说明</h3>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background: var(--light);">
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border);">参数</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border);">说明</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border);">推荐值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">场景检测阈值</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">数值越低越敏感</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">25-30</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">抽帧 FPS</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">每秒采样帧数</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">1-2</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">图像最长边</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">输入模型的图像尺寸</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">512-768</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">Beam Size</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">ASR 搜索宽度</td>
+                                    <td style="padding: 12px; border: 1px solid var(--border);">5</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="divider"></div>
+
+                        <h3 style="color: var(--primary); margin-top: 30px; margin-bottom: 16px;">💡 最佳实践</h3>
+
+                        <div class="alert alert-success">
+                            <span>✅</span>
+                            <div>
+                                <strong>快节奏视频（剪辑、Vlog）</strong><br>
+                                • 使用 ContentDetector<br>
+                                • 阈值设置为 20-25<br>
+                                • 抽帧 FPS: 2-3
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <span>✅</span>
+                            <div>
+                                <strong>电影/纪录片</strong><br>
+                                • 使用 AdaptiveDetector<br>
+                                • 阈值设置为 25-30<br>
+                                • 抽帧 FPS: 1-1.5
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <span>✅</span>
+                            <div>
+                                <strong>监控视频</strong><br>
+                                • 禁用场景检测（作为单一场景）<br>
+                                • 抽帧 FPS: 0.5-1
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <h3 style="color: var(--primary); margin-top: 30px; margin-bottom: 16px;">🛠️ 技术架构</h3>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>视觉理解</strong>: MiniCPM-V 4.5</li>
+                            <li><strong>场景检测</strong>: PySceneDetect</li>
+                            <li><strong>语音识别</strong>: Faster-Whisper</li>
+                            <li><strong>视频处理</strong>: Decord / OpenCV / MoviePy</li>
+                            <li><strong>下载工具</strong>: yt-dlp</li>
+                        </ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loadingText">正在处理...</h3>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let uploadedFile = null;
+        let downloadedServerFile = null;
+        let downloadedFiles = [];
+        let analysisResults = null;
+
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`tab-${targetTab}`).classList.add('active');
+            });
+        });
+
+        // 滑块值更新
+        function setupSlider(sliderId, valueId, formatter = (v) => v) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            slider.addEventListener('input', (e) => {
+                valueDisplay.textContent = formatter(e.target.value);
+            });
+        }
+
+        setupSlider('sceneThreshold', 'thresholdValue', v => parseFloat(v).toFixed(1));
+        setupSlider('chooseFps', 'fpsValue', v => parseFloat(v).toFixed(1));
+        setupSlider('maxSide', 'maxSideValue');
+        setupSlider('timeScale', 'timeScaleValue', v => parseFloat(v).toFixed(2));
+        setupSlider('asrBeamSize', 'beamSizeValue');
+        setupSlider('asrMaxChars', 'asrMaxCharsValue');
+
+        // 场景检测选项显示/隐藏
+        document.getElementById('useSceneDetection').addEventListener('change', (e) => {
+            document.getElementById('sceneDetectionOptions').style.display = 
+                e.target.checked ? 'block' : 'none';
+        });
+
+        // 自适应检测器选项
+        document.getElementById('useAdaptive').addEventListener('change', (e) => {
+            document.getElementById('thresholdSlider').style.display = 
+                e.target.checked ? 'none' : 'block';
+        });
+
+        // ASR选项显示/隐藏
+        document.getElementById('enableAsr').addEventListener('change', (e) => {
+            document.getElementById('asrOptions').style.display = 
+                e.target.checked ? 'block' : 'none';
+        });
+
+        // 文件上传
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const videoPreview = document.getElementById('videoPreview');
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        uploadBox.addEventListener('click', () => fileInput.click());
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('请上传视频文件！');
+                return;
+            }
+            uploadedFile = file;
+            videoPlayer.src = URL.createObjectURL(file);
+            videoPreview.style.display = 'block';
+            showAlert('success', `✅ 已上传视频: ${file.name}`);
+        }
+
+        // URL下载
+        // 找到 downloadBtn 的事件监听器并替换它
+
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) {
+                showAlert('warning', '⚠️ 请输入视频链接');
+                return;
+            }
+
+            showLoading('正在请求服务器下载视频...');
+            
+            try {
+                const backendUrl = `http://${window.location.hostname}:5000/download`;
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url }), // 将 URL 发送给后端
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `下载失败: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // **重要：** 用一个新变量来存储服务器返回的文件名
+                downloadedServerFile = {
+                    name: result.filename,
+                    title: result.original_title
+                };
+                uploadedFile = null; // 清除本地上传的文件，确保一次只分析一个
+
+                hideLoading();
+                showAlert('success', `✅ 下载成功: ${result.filename}`);
+
+                // 更新 UI，让用户知道哪个文件准备好被分析了
+                // (可以高亮显示或是在预览区显示文件名)
+                document.getElementById('uploadBox').innerHTML = `
+                    <div class="upload-icon">✅</div>
+                    <div class="upload-text">文件已就绪</div>
+                    <div class="upload-hint" style="word-break: break-all;">${result.filename}</div>`;
+                videoPreview.style.display = 'none';
+
+
+            } catch (error) {
+                hideLoading();
+                console.error('下载失败:', error);
+                showAlert('danger', `❌ 下载失败: ${error.message}`);
+            }
+        });
+
+        // 文件列表管理
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            if (downloadedFiles.length === 0) {
+                fileList.innerHTML = '<p style="color: #64748b; font-size: 0.9rem;">暂无已下载的视频文件</p>';
+                return;
+            }
+
+            fileList.innerHTML = downloadedFiles.map((file, idx) => `
+                <div class="file-item">
+                    <span class="file-name">📹 ${file.name}</span>
+                    <button class="btn btn-danger btn-sm" onclick="deleteFile(${idx})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteFile(idx) {
+            downloadedFiles.splice(idx, 1);
+            updateFileList();
+            showAlert('success', '已删除文件');
+        }
+
+        document.getElementById('clearFiles').addEventListener('click', () => {
+            downloadedFiles = [];
+            updateFileList();
+            showAlert('success', '已清空所有文件');
+        });
+
+        // 开始分析
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            if (!uploadedFile && !downloadedServerFile) {
+                showAlert('warning', '⚠️ 请先上传一个视频或从URL下载一个视频！');
+                return;
+            }
+
+            showLoading('正在上传并启动分析...');
+
+            const formData = new FormData();
+            
+            // 【核心逻辑】判断是上传文件，还是发送已下载的文件名
+            if (uploadedFile) {
+                formData.append('video', uploadedFile);
+            } else {
+                formData.append('filename', downloadedServerFile.name);
+            }
+
+            formData.append('video', uploadedFile);
+            formData.append('useSceneDetection', document.getElementById('useSceneDetection').checked);
+            formData.append('useAdaptive', document.getElementById('useAdaptive').checked);
+            formData.append('sceneThreshold', document.getElementById('sceneThreshold').value);
+            formData.append('chooseFps', document.getElementById('chooseFps').value);
+            formData.append('maxSide', document.getElementById('maxSide').value);
+            formData.append('timeScale', document.getElementById('timeScale').value);
+            formData.append('promptText', document.getElementById('promptText').value);
+            formData.append('enableAsr', document.getElementById('enableAsr').checked);
+            formData.append('asrLanguage', document.getElementById('asrLanguage').value);
+            formData.append('asrBeamSize', document.getElementById('asrBeamSize').value);
+            formData.append('asrVad', document.getElementById('asrVad').checked);
+            formData.append('asrMaxChars', document.getElementById('asrMaxChars').value);
+            
+            try {
+                const backendUrl = `http://${window.location.hostname}:5000/analyze`;
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `服务器返回错误: ${response.status}`);
+                }
+
+                const results = await response.json();
+                
+                hideLoading();
+                updateResultsUI(results);
+                document.querySelector('.tab[data-tab="results"]').click();
+                showAlert('success', '✅ 分析完成！');
+
+                // 分析完成后，重置状态
+                uploadedFile = null;
+                downloadedServerFile = null;
+
+            } catch (error) {
+                hideLoading();
+                console.error('分析失败:', error);
+                showAlert('danger', `❌ 分析失败: ${error.message}`);
+            }
+        });
+
+        function updateResultsUI(data) {
+            document.getElementById('noResultsAlert').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'block';
+
+            document.getElementById('statScenes').textContent = data.stats.scenes;
+            document.getElementById('statFrames').textContent = data.stats.frames;
+            document.getElementById('statDuration').textContent = data.stats.duration;
+            document.getElementById('statFps').textContent = data.stats.fps;
+
+            document.getElementById('reportText').innerHTML = marked.parse(data.report);
+            document.getElementById('transcriptText').textContent = data.full_transcript || '(无可用语音转写)';
+
+            const sceneDetailsContainer = document.getElementById('sceneDetails');
+            sceneDetailsContainer.innerHTML = '';
+
+            if (data.scene_details && data.scene_details.length > 0) {
+                data.scene_details.forEach(scene => {
+                    const sceneCard = document.createElement('div');
+                    sceneCard.className = 'scene-card';
+                    
+                    const asrEnabled = document.getElementById('enableAsr').checked;
+                    const transcriptHTML = asrEnabled ? `
+                        <div>
+                            <strong>🎤 语音转写</strong>
+                            <div class="scene-text">${scene.transcript || '(此场景无语音转写)'}</div>
+                        </div>` : '';
+
+                    sceneCard.innerHTML = `
+                        <div class="scene-header">
+                            <div class="scene-title">${scene.title}</div>
+                            <div class="scene-badges">
+                                <span class="badge badge-primary">⏱️ ${scene.time}</span>
+                                <span class="badge badge-success">✅ 正常</span>
+                            </div>
+                        </div>
+                        <div class="scene-content">
+                            <div>
+                                <strong>🎬 场景分析</strong>
+                                <div class="scene-text">${marked.parse(scene.analysis)}</div>
+                            </div>
+                            ${transcriptHTML}
+                        </div>`;
+                    
+                    sceneDetailsContainer.appendChild(sceneCard);
+                });
+            } else {
+                sceneDetailsContainer.innerHTML = '<p>未能生成场景详情。</p>';
+            }
+        }
+
+        // 折叠面板
+        function toggleCollapsible(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('span:last-child');
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                arrow.textContent = '▼';
+            } else {
+                content.classList.add('active');
+                arrow.textContent = '▲';
+            }
+        }
+
+        // 下载报告
+        document.getElementById('downloadJson').addEventListener('click', () => {
+            const data = {
+                ok: true,
+                report: document.getElementById('reportText').textContent,
+                scenes: []
+            };
+            downloadFile(JSON.stringify(data, null, 2), `scene_report_${Date.now()}.json`, 'application/json');
+        });
+
+        document.getElementById('downloadTxt').addEventListener('click', () => {
+            const text = document.getElementById('reportText').textContent;
+            downloadFile(text, `scene_report_${Date.now()}.txt`, 'text/plain');
+        });
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showAlert('success', `✅ 已下载: ${filename}`);
+        }
+
+        // 工具函数
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function updateLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function showAlert(type, message) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; min-width: 300px; animation: fadeInDown 0.3s ease;';
+            alert.innerHTML = `<span>${message}</span>`;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.style.animation = 'fadeIn 0.3s ease reverse';
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        // 初始化
+        updateFileList();
+    </script>
+    <script src="./marked.min.js"></script>
+</body>
+</html>
