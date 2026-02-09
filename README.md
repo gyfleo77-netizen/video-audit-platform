@@ -53,6 +53,7 @@ Download Source: Hugging Face.
 Place the downloaded files into the models/faster-whisper-base directory.
 Final Directory Structure:
 
+```text
 video-audit-platform/
 ├── appp_api.py
 ├── index2.html
@@ -65,6 +66,7 @@ video-audit-platform/
     ├── runtime.py
     ├── video_utils.py
     └── asr_utils.py
+```
 Step 3: Start the Service
 We provide a one-click startup script that automatically handles environment variables and background processes.
 
