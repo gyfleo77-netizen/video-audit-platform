@@ -1,0 +1,45 @@
+# --- Web 核心框架 ---
+flask
+flask-cors
+flask-sqlalchemy
+# 生产环境建议增加 gunicorn，但在开发调试阶段 Flask 自带的够用
+# gunicorn
+
+# --- 深度学习与 AI 模型 ---
+torch
+torchvision
+torchaudio
+# transformers 需要以下库支持特定功能
+transformers
+accelerate
+sentencepiece
+einops
+
+# --- 语音识别 (ASR) ---
+# Faster-Whisper 核心
+faster-whisper
+
+# --- 视频与图像处理 ---
+# 视频读取增强
+decord
+opencv-python
+# 场景检测
+scenedetect[opencv]
+# 视频下载
+yt-dlp
+# 图像处理
+pillow
+# 用于 handle_video_codec 时调用 ffprobe 的解析（可选，但推荐）
+# ffprobe 在代码中是 subprocess 调用，需提醒用户系统安装 ffmpeg
+
+# --- 数据处理与数学计算 ---
+numpy
+scipy
+
+# --- 前端展示与 Markdown 解析 ---
+# 虽然 index.html 里引用了 marked.js，但在后端如果涉及 Markdown 预处理可以加：
+# markdown
+
+# --- 其它工具 ---
+tqdm
+python-dotenv
